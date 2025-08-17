@@ -3,6 +3,7 @@
 A simple Java console application for tracking fitness, nutrition, and calories.
 
 ## Features
+- Track indivual users
 - Track daily meals and calories
 - Log workouts and calories burned
 - Automatic calorie goal suggestions

@@ -28,15 +28,30 @@ public class HealthApp {
     static Scanner scanner = new Scanner(System.in);
     static List<DailyLog> logs = new ArrayList<>();
     static final String FILE_NAME = "health_logs.dat";
+    static String currentUser;   // Track the active user
+    static List<DailyLog> userLogs = new ArrayList<>(); // Logs for that user only
 
     public static void main(String[] args) {
         // Load saved logs if available
         loadLogs();
 
-        boolean running = true;
+        // Ask for username at the start
+        System.out.print("Enter your name to load your data: ");
+        currentUser = scanner.next();
 
+        // Get only logs for this user
+        for (DailyLog log : logs) {
+            if (log.name.equalsIgnoreCase(currentUser)) {
+                userLogs.add(log);
+            }
+        }
+
+        System.out.println("Welcome, " + currentUser + "!");
+        System.out.println("Loaded " + userLogs.size() + " logs for you.");
+
+        boolean running = true;
         while (running) {
-            System.out.println("\n=== Health Tracker ===");
+            System.out.println("\n=== Health Tracker (" + currentUser + ") ===");
             System.out.println("1. Enter Daily Data");
             System.out.println("2. View Specific Day");
             System.out.println("3. View Monthly Progress");
@@ -74,8 +89,7 @@ public class HealthApp {
         System.out.print("Enter date (YYYY-MM-DD): ");
         log.date = scanner.next();
 
-        System.out.print("Enter your name: ");
-        log.name = scanner.next();
+        log.name = currentUser; // Always tied to current user
 
         System.out.print("Enter your age: ");
         log.age = getIntInput();
@@ -130,15 +144,12 @@ public class HealthApp {
             log.message = "You have gone over your calorie limit for the day. You will do better tomorrow.";
         }
 
+        // Add to both user logs and global logs
+        userLogs.add(log);
         logs.add(log);
-        sortLogsByDate();
+        sortLogsByDate(userLogs);
 
-        // Keep only the last 365 days
-        if (logs.size() > 365) {
-            logs.remove(0);
-        }
-
-        // Immediately save and display the full summary of the entry just added
+        // Immediately save and display the full summary
         saveLogs();
         displayLog(log);
         System.out.println("Daily data saved!");
@@ -187,7 +198,7 @@ public class HealthApp {
         String date = scanner.next();
         boolean found = false;
 
-        for (DailyLog log : logs) {
+        for (DailyLog log : userLogs) {
             if (log.date.equals(date)) {
                 displayLog(log);
                 found = true;
@@ -203,14 +214,10 @@ public class HealthApp {
     private static void viewMonthlyProgress() {
         Map<String, List<DailyLog>> monthlyData = new HashMap<>();
 
-        for (DailyLog log : logs) {
+        for (DailyLog log : userLogs) {
             String ym = log.date.substring(0, 7); // YYYY-MM
-            List<DailyLog> monthLogs = monthlyData.get(ym);
-            if (monthLogs == null) {
-                monthLogs = new ArrayList<DailyLog>();
-                monthlyData.put(ym, monthLogs);
-            }
-            monthLogs.add(log);
+            monthlyData.putIfAbsent(ym, new ArrayList<>());
+            monthlyData.get(ym).add(log);
         }
 
         for (String month : monthlyData.keySet()) {
@@ -238,16 +245,16 @@ public class HealthApp {
     }
 
     private static void viewWeightTrend() {
-        if (logs.isEmpty()) {
+        if (userLogs.isEmpty()) {
             System.out.println("No data to show.");
             return;
         }
 
-        double startWeight = logs.get(0).weight;
-        double endWeight = logs.get(logs.size() - 1).weight;
+        double startWeight = userLogs.get(0).weight;
+        double endWeight = userLogs.get(userLogs.size() - 1).weight;
         double totalChange = endWeight - startWeight;
 
-        for (DailyLog log : logs) {
+        for (DailyLog log : userLogs) {
             System.out.println(log.date + ": " + log.weight + " lbs");
         }
         System.out.printf("Total weight change: %.1f lbs\n", totalChange);
@@ -282,12 +289,8 @@ public class HealthApp {
         else return "Obese";
     }
 
-    private static void sortLogsByDate() {
-        Collections.sort(logs, new Comparator<DailyLog>() {
-            public int compare(DailyLog a, DailyLog b) {
-                return a.date.compareTo(b.date);
-            }
-        });
+    private static void sortLogsByDate(List<DailyLog> logList) {
+        Collections.sort(logList, Comparator.comparing(a -> a.date));
     }
 
     private static void saveLogs() {
@@ -305,7 +308,7 @@ public class HealthApp {
         if (!file.exists()) return;
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(FILE_NAME))) {
             logs = (List<DailyLog>) ois.readObject();
-            System.out.println("Loaded " + logs.size() + " logs from file.");
+            System.out.println("Loaded " + logs.size() + " total logs from file.");
         } catch (Exception e) {
             System.out.println("Error loading logs: " + e.getMessage());
         }
