@@ -83,77 +83,86 @@ public class HealthApp {
         }
     }
 
-    private static void enterDailyData() {
-        DailyLog log = new DailyLog();
+private static void enterDailyData() {
+    DailyLog log = new DailyLog();
 
-        System.out.print("Enter date (YYYY-MM-DD): ");
-        log.date = scanner.next();
+    System.out.print("Enter date (YYYY-MM-DD): ");
+    log.date = scanner.next();
 
-        log.name = currentUser; // Always tied to current user
-
-        System.out.print("Enter your age: ");
-        log.age = getIntInput();
-
-        System.out.print("Enter your sex (M/F): ");
-        log.sex = scanner.next().toUpperCase();
-
-        System.out.print("Enter your weight (lbs): ");
-        log.weight = getDoubleInput();
-
-        System.out.print("Enter your height - feet: ");
-        log.heightFeet = getIntInput();
-        System.out.print("Enter your height - inches: ");
-        log.heightInches = getIntInput();
-
-        double heightMeters = ((log.heightFeet * 12) + log.heightInches) * 0.0254;
-        double weightKg = log.weight * 0.453592;
-        log.weightClass = getWeightClass(weightKg, heightMeters);
-
-        System.out.println("Do you want the app to suggest a calorie goal? (Y/N): ");
-        String choice = scanner.next();
-        if (choice.equalsIgnoreCase("Y")) {
-            log.calorieGoal = calculateCalorieGoal(log.age, log.sex, weightKg, heightMeters);
-            System.out.println("Suggested Calorie Goal: " + log.calorieGoal + " cal");
-        } else {
-            System.out.print("Enter your calorie goal for the day: ");
-            log.calorieGoal = getIntInput();
+    // ✅ Prevent duplicate entry for the same day
+    for (DailyLog existingLog : userLogs) {
+        if (existingLog.date.equals(log.date)) {
+            System.out.println("⚠️ You already have a log for " + log.date + ". You cannot enter it twice.");
+            return; // Stop here, don’t add a duplicate
         }
-
-        log.totalCaloriesEaten = 0;
-        scanner.nextLine(); // clear buffer
-        for (int i = 0; i < log.mealNames.length; i++) {
-            System.out.print("What did you have for " + log.mealNames[i] + "?: ");
-            log.mealDescriptions[i] = scanner.nextLine();
-            System.out.print("How many calories was that?: ");
-            log.mealCalories[i] = getIntInput();
-            scanner.nextLine(); // clear buffer
-            log.totalCaloriesEaten += log.mealCalories[i];
-        }
-
-        System.out.print("What exercise did you do today?: ");
-        log.exerciseType = scanner.nextLine();
-        System.out.print("How many calories did you burn?: ");
-        log.caloriesBurned = getIntInput();
-
-        log.netCalories = log.totalCaloriesEaten - log.caloriesBurned;
-        log.caloriesLeft = log.calorieGoal - log.netCalories;
-
-        if (log.netCalories <= log.calorieGoal) {
-            log.message = "You have met your calorie goal for the day! Keep up the great work!!";
-        } else {
-            log.message = "You have gone over your calorie limit for the day. You will do better tomorrow.";
-        }
-
-        // Add to both user logs and global logs
-        userLogs.add(log);
-        logs.add(log);
-        sortLogsByDate(userLogs);
-
-        // Immediately save and display the full summary
-        saveLogs();
-        displayLog(log);
-        System.out.println("Daily data saved!");
     }
+
+    log.name = currentUser; // Always tied to current user
+
+    System.out.print("Enter your age: ");
+    log.age = getIntInput();
+
+    System.out.print("Enter your sex (M/F): ");
+    log.sex = scanner.next().toUpperCase();
+
+    System.out.print("Enter your weight (lbs): ");
+    log.weight = getDoubleInput();
+
+    System.out.print("Enter your height - feet: ");
+    log.heightFeet = getIntInput();
+    System.out.print("Enter your height - inches: ");
+    log.heightInches = getIntInput();
+
+    double heightMeters = ((log.heightFeet * 12) + log.heightInches) * 0.0254;
+    double weightKg = log.weight * 0.453592;
+    log.weightClass = getWeightClass(weightKg, heightMeters);
+
+    System.out.println("Do you want the app to suggest a calorie goal? (Y/N): ");
+    String choice = scanner.next();
+    if (choice.equalsIgnoreCase("Y")) {
+        log.calorieGoal = calculateCalorieGoal(log.age, log.sex, weightKg, heightMeters);
+        System.out.println("Suggested Calorie Goal: " + log.calorieGoal + " cal");
+    } else {
+        System.out.print("Enter your calorie goal for the day: ");
+        log.calorieGoal = getIntInput();
+    }
+
+    log.totalCaloriesEaten = 0;
+    scanner.nextLine(); // clear buffer
+    for (int i = 0; i < log.mealNames.length; i++) {
+        System.out.print("What did you have for " + log.mealNames[i] + "?: ");
+        log.mealDescriptions[i] = scanner.nextLine();
+        System.out.print("How many calories was that?: ");
+        log.mealCalories[i] = getIntInput();
+        scanner.nextLine(); // clear buffer
+        log.totalCaloriesEaten += log.mealCalories[i];
+    }
+
+    System.out.print("What exercise did you do today?: ");
+    log.exerciseType = scanner.nextLine();
+    System.out.print("How many calories did you burn?: ");
+    log.caloriesBurned = getIntInput();
+
+    log.netCalories = log.totalCaloriesEaten - log.caloriesBurned;
+    log.caloriesLeft = log.calorieGoal - log.netCalories;
+
+    if (log.netCalories <= log.calorieGoal) {
+        log.message = "You have met your calorie goal for the day! Keep up the great work!!";
+    } else {
+        log.message = "You have gone over your calorie limit for the day. You will do better tomorrow.";
+    }
+
+    // Add to both user logs and global logs
+    userLogs.add(log);
+    logs.add(log);
+    sortLogsByDate(userLogs);
+
+    // Immediately save and display the full summary
+    saveLogs();
+    displayLog(log);
+    System.out.println("Daily data saved!");
+}
+
 
     private static int calculateCalorieGoal(int age, String sex, double weightKg, double heightM) {
         double heightCm = heightM * 100;
