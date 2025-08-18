@@ -67,17 +67,12 @@ healthapp
 
 If you would like to download the app as an icon here are the steps you follow
 STEP 1: Open Automator
-
 Press Cmd + Space, type Automator, and press Enter.
-
 When prompted, choose “Application”.
-
 This is important because applications created in Automator are clickable apps on your Desktop.
 
 STEP 2: Add a “Run Shell Script” Action
-
 In the left-hand search bar, type “Run Shell Script”.
-
 Drag the Run Shell Script action to the right panel (the workflow area).
 
 STEP 3: Configure the Shell Script
@@ -89,7 +84,6 @@ osascript -e 'tell application "Terminal"
     do script "cd /path/to/your/jar && java -jar HealthApp.jar"
     activate
 end tell'
-
 
 Important:
 Replace /path/to/your/jar with the actual folder containing HealthApp.jar.
